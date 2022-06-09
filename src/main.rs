@@ -5,7 +5,7 @@ use text_io::read;
 // use gtk::{Application, ApplicationWindow, Button};
 
 mod model;
-
+use crate::model::*;
 
 fn main() {
     let db = sqlite::open("/home/george/Documents/progs/musiclistdb/musiclist.db").unwrap();

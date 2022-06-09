@@ -1,6 +1,6 @@
 use sqlite::{Connection, State};
 
-struct Song {
+pub struct Song {
     sid: i64,
     uid: i64,
     title: String,
