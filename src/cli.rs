@@ -28,7 +28,7 @@ impl Cli {
                 "help" => Cli::help(),
                 "quit" => break,
                 "" => continue,
-                _ => println!("Unrecognised Command, type \"help\" for help")
+                _ => println!("Unrecognised command, type \"help\" for help")
             }
         }
     }
@@ -52,8 +52,8 @@ impl Cli {
             
             Some(arg) => {
                 match *arg {
-                    "user" => Cli::add_user(ml),
-                    "song" => Cli::add_song(ml),
+                    "user" =>   Cli::add_user(ml),
+                    "song" =>   Cli::add_song(ml),
                     "snippit" => Cli::add_snippit(ml),
                     _ => println!("Usage: add <user/song/snippit>"),
                 }
@@ -163,6 +163,25 @@ impl Cli {
             None => println!("Usage: add <user/song/snippit>")
         }
     }
+
+    fn list_users(ml: &MusicList) {
+
+    }   
+
+    fn list_songs(ml: &MusicList) {
+
+    }   
+
+    fn list_snippits(ml: &MusicList) {
+
+    }   
+
+    
+    
+
+
+
+
 
     fn select(split: &Vec<&str>, ml: &mut MusicList) {
         match split.get(1) {

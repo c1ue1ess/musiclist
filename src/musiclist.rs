@@ -2,19 +2,15 @@ use std::{collections::HashMap};
 
 pub struct MusicList {
     curr_user: Option<String>,
-
-    // curr song/snippit is the index of the song/snippit in their vectors
-    curr_song: Option<usize>,
-    curr_snippit: Option<usize>,
-    
+    // curr song/snippit is the index of the song/snippit in their vectors    
     users: HashMap<String, User>
 }
 
 impl MusicList {
     
     pub fn get_curr_user(&mut self) -> Result<&mut User, String> {
-        match self.curr_user {
-            Some(username) => Ok(self.users.get_mut(&username).unwrap()),
+        match &self.curr_user {
+            Some(username) => Ok(self.users.get_mut(username).unwrap()),
             None => Err(String::from("No current user selected!"))
         }
     }
@@ -22,33 +18,39 @@ impl MusicList {
     pub fn get_curr_song(&mut self) -> Result<&mut Song, String> {
         match self.get_curr_user() {
             Ok(user) => {
-                match self.curr_song {
-                    Some(idx) => Ok(user.songs.get_mut(idx).unwrap()),
-                    None => Err(String::from("No current song"))
-                }
+                    match user.get_curr_song() {
+                        Ok(song) => return Ok(song),
+                        Err(e) => return Err(e)
+                    }
             }
 
             Err(e) => Err(e)
-        }    
+        }
     }
-    
+
     pub fn get_curr_snippit(&mut self) -> Result<&mut Snippit, String> {
-        match self.get_curr_song() {
-            Ok(song) => {
-                match self.curr_snippit {
-                    Some(idx) => Ok(song.snippits.get_mut(idx).unwrap()),
-                    None => Err(String::from("No current song"))
-                }
+        match self.get_curr_user() {
+            Ok(user) => {
+                    match user.get_curr_song() {
+                        Ok(song) => {
+                            match song.get_curr_snippit() {
+                                Ok(snippit) => return Ok(snippit),
+                                Err(e) => return Err(e)
+                            }
+                        }
+
+                        Err(e) => return Err(e)
+                    }
             }
 
             Err(e) => Err(e)
-        } 
+        }
     }
 
 
 
     pub fn add_user(&mut self, username: String) -> Result<(), String>{
-        match self.users.insert(username, User::new(username)) {
+        match self.users.insert(username.clone(), User::new(username)) {
             Some(_) => Ok(()),
             None => Err(String::from("User already exists"))
         }
@@ -90,16 +92,24 @@ impl MusicList {
     }
 }
 
-struct User {
+pub struct User {
     username: String,
-    songs: Vec<Song>
+    songs: Vec<Song>,
+    curr_song: Option<usize>,
 }
 
 impl User {
     fn new(username: String) -> User {
-        User { username, songs: Vec::new() }
+        User { username, songs: Vec::new(), curr_song: None }
     } 
 
+    fn get_curr_song(&mut self) -> Result<&mut Song, String> {
+        match self.curr_song {
+            Some(idx) => return Ok(self.songs.get_mut(idx).unwrap()),
+            None => return Err(String::from("No current song"))
+        }
+    }
+    
     pub fn add_song(&mut self, song: Song) {
         self.songs.push(song);
     }
@@ -132,6 +142,7 @@ pub struct Song {
     link: String, 
     genres: Vec<String>,
     snippits: Vec<Snippit>,
+    curr_snippit: Option<usize>,
 }
 
 impl Song {
@@ -140,9 +151,18 @@ impl Song {
                 artist,
                 link,
                 genres: Vec::new(),
-                snippits: Vec::new()
+                snippits: Vec::new(),
+                curr_snippit: None
         }
     }
+
+    pub fn get_curr_snippit(&mut self) -> Result<&mut Snippit, String> {
+            match self.curr_snippit {
+                Some(idx) => Ok(self.snippits.get_mut(idx).unwrap()),
+                None => Err(String::from("No current song"))
+            }
+    } 
+    
 
     pub fn add_genre(&mut self, genre: String) {
         self.genres.push(genre);
