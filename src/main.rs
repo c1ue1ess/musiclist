@@ -1,9 +1,18 @@
 #![allow(dead_code)]
 
+use cli::Cli;
+use musiclist::MusicList;
+
 mod cli;
 mod musiclist;
 
 fn main() {
+
+    let mut ml = MusicList::new();
+    let mut cli = Cli::new(&mut ml);
+
+    cli.menu();
+
     // println!("Hello, world!");
 
     // let mut users = HashMap::new();
