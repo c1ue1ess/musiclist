@@ -8,7 +8,7 @@ mod musiclist;
 
 fn main() {
 
-    let mut ml = MusicList::new();
+    let mut ml = MusicList::new_filled();
     let mut cli = Cli::new(&mut ml);
 
     cli.menu();

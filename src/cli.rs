@@ -31,7 +31,6 @@ impl Cli<'_> {
                 "select" => self.select(&split),
                 "edit" => self.edit(&split),
                 "remove" => self.remove(&split),
-                
                 "help" => Cli::help(),
                 "quit" | "exit" | "q" => break,
                 "" => continue,
@@ -71,17 +70,13 @@ impl Cli<'_> {
     }
 
     fn add_user(&mut self) {
-        println!("Enter Username (leave empty to exit):");
-        let username: String = read!();
-
-        if username == "" {
-            return;
-        }
+        println!("Enter Username:");
+        let username: String = read!("{}\n");
 
         // if username exists loop and ask for a different username
         match self.ml.add_user(username) {
             Ok(()) => return,
-            Err(error) => println!("{:?}", error)
+            Err(error) => println!("{}", error)
         }
     }
 
@@ -125,34 +120,56 @@ impl Cli<'_> {
     fn add_snippit(&mut self) {
         match self.ml.get_curr_song() {
             Ok(song) => {
-                println!("Enter snippit start (in seconds):");
-                let start: u32 = read!();
+                let start;
+                loop {
+
+                    println!("Enter snippit start (in seconds):");
+                    let start_str: String = read!("{}\n");
+                    
+                    if let Ok(num) = start_str.parse::<u32>() {
+                        start = num;
+                        break;
+                    } 
+
+                    println!("Invalid format. Enter a number");
+                }
                 
-                println!("Enter snippit end (in seconds):");
-                let end: u32 = read!();
+
+                let end;
+                loop {
+
+                    println!("Enter snippit end (in seconds):");
+                    let end_str: String = read!();
+                
+                    if let Ok(num) = end_str.parse::<u32>() {
+                        end = num;
+                        break;
+                    }
+
+                    println!("Invalid format. Enter a number");
+                }
 
                 println!("Enter Comment:");
                 let comment = read!("{}\n");
 
-                let mut snippit = Snippit::new(start, end, comment);
-
                 println!("Do you want to add a theme? [y/n]");
                 let mut add_theme: String = read!();
+                let mut themes = Vec::new();
                 while add_theme == "y" {
+
                     println!("Enter theme:");
                     let theme: String = read!();
-                    snippit.add_theme(theme);
+                    themes.push(theme);
 
                     println!("Do you want to add another theme? [y/n]");
                     add_theme = read!();
                 }
 
-                song.add_snippit(snippit)
+                song.add_snippit(start, end, comment, themes)
             }
             
             Err(e) => {
                 println!("{:?}", e);
-                return;
             }
         } 
     }
@@ -175,20 +192,20 @@ impl Cli<'_> {
 
     fn list_users(&self) {
         self.ml.get_all_users().iter()
-            .for_each(|user| println!("Username: {}\n", user.get_username()));
+            .for_each(|user| println!("USER: {}", user.get_username()));
     }   
 
     fn show_song(song: &Song) {
-        println!("TITLE: {}\nARTIST: {}", 
+        print!("TITLE: {}\tARTIST: {}", 
             song.get_title(), song.get_artist());
         
-        println!("GENRES:");
+        print!("\tGENRES: ");
 
         for genre in song.get_genres() {
-            println!("\t{}", genre);
+            print!("{} ", genre);
         }
 
-        println!("LINK: {}", song.get_link());
+        println!("\tLINK: {}", song.get_link());
     }
 
     fn list_songs(&mut self) {
@@ -196,19 +213,19 @@ impl Cli<'_> {
             Ok(user) => user.get_all_songs().iter()
                             .for_each(|song| Cli::show_song(song)),
         
-            Err(err) => println!("{}", err)
+            Err(err) => println!("{err}")
         }
     }   
 
     fn show_snippit(snippit: &Snippit) {
-        println!("\tSTART: {}\n\tEND: {}", snippit.get_start(), snippit.get_end());
+        print!("ID: {}\tSTART: {}\tEND: {}", snippit.get_id(), snippit.get_start(), snippit.get_end());
         
-        println!("\tTHEMES:");
+        print!("\tTHEMES:");
         for theme in snippit.get_themes() {
-            println!("\t\t{}", theme);
+            print!("{theme} ");
         }
 
-        println!("\n\tCOMMENT: {}", snippit.get_comment());
+        println!("\tCOMMENT: {}", snippit.get_comment());
     }
 
     fn list_snippits(&mut self) { 
@@ -216,7 +233,7 @@ impl Cli<'_> {
             Ok(song) => song.get_all_snippits().iter()
                             .for_each(|snippit| Cli::show_snippit(snippit)),
             
-            Err(err) => println!("{}", err)
+            Err(err) => println!("{err}")
         }
     }   
 
@@ -228,21 +245,17 @@ impl Cli<'_> {
                     "user" => self.select_user(),
                     "song" => self.select_song(),
                     "snippit" => self.select_snippit(),
-                    _ => println!("Usage: add <user/song/snippit>"),
+                    _ => println!("Usage: select <user/song/snippit>"),
                 }
             }
             
-            None => println!("Usage: add <user/song/snippit>")
+            None => println!("Usage: select <user/song/snippit>")
         }
     }
 
     fn select_user(&mut self) {
-        println!("Enter Username (leave empty to exit):");
+        println!("Enter Username:");
         let username: String = read!("{}\n");
-
-        if username == "" {
-            return;
-        }
 
         if let Err(err) = self.ml.set_curr_user(&username) {
             println!("{err}");
@@ -250,12 +263,8 @@ impl Cli<'_> {
     }
     
     fn select_song(&mut self) {
-        println!("Enter Song title (leave empty to exit):");
+        println!("Enter Song title:");
         let title: String = read!("{}\n");
-
-        if title == "" {
-            return;
-        }
 
         if let Err(err) = self.ml.set_curr_song(&title) {
             println!("{err}");
@@ -266,13 +275,7 @@ impl Cli<'_> {
         println!("Enter the index of the snippit (leave empty to exit):");
         let snip_idx_str: String = read!("{}\n");
 
-        if snip_idx_str == "" {
-            return;
-        }
-
-        let snip_idx = snip_idx_str.parse::<usize>();
-
-        match snip_idx {
+        match snip_idx_str.parse::<usize>() {
             Ok(idx) => {
                 if let Err(err) = self.ml.set_curr_snippit(idx) {
                     println!("{err}");
@@ -285,33 +288,72 @@ impl Cli<'_> {
     
     fn edit(&mut self, split: &Vec<&str>,) {
         match split.get(1) {
-            
             Some(arg) => {
                 match *arg {
-                    // "user" => Cli::add_user(ml),
-                    // "song" => Cli::add_song(ml),
-                    // "snippit" => Cli::add_snippit(ml),
-                    _ => println!("Usage: add <user/song/snippit>"),
+                    "user" => self.edit_user(),
+                    "song" => self.edit_song(),
+                    "snippit" => self.edit_snippit(),
+                    _ => println!("Usage: edit <user/song/snippit>"),
                 }
             }
             
-            None => println!("Usage: add <user/song/snippit>")
+            None => println!("Usage: edit <user/song/snippit>")
         }
     }
-    
-    fn remove(&mut self, split: &Vec<&str>) {
-        match split.get(1) {
+
+    fn edit_user(&mut self) {
+        let mut song = match self.ml.get_curr_user() {
+            Ok(song) => song,
             
+            Err(e) => {
+                println!("{e}");
+                return;
+            }
+        };
+
+    }
+
+    fn edit_song(&mut self) {
+
+    }
+
+    fn edit_snippit(&mut self) {
+
+    }
+
+
+    
+
+    fn remove(&mut self, split: &Vec<&str>) {
+        
+        
+        match split.get(1) {
             Some(arg) => {
-                match *arg {
-                    // "user" => Cli::add_user(ml),
-                    // "song" => Cli::add_song(ml),
-                    // "snippit" => Cli::add_snippit(ml),
-                    _ => println!("Usage: add <user/song/snippit>"),
+                println!("Are you sure you want to remove {arg}? [y/n]");
+
+                let confirm: String = read!("{}\n");
+                
+                if confirm == "y" {   
+                    let res = match *arg {
+                        "user" => {
+                            self.ml.remove_curr_user()
+                        }
+                        "song" => {
+                            self.ml.remove_curr_song()
+                        }
+                        "snippit" => {
+                            self.ml.remove_curr_snippit()
+                        }
+                        _ => Err(String::from("Usage: remove <user/song/snippit>")),
+                    };
+
+                    if let Err(e) = res {
+                        println!("{e}")
+                    }
                 }
             }
             
-            None => println!("Usage: add <user/song/snippit>")
+            None => println!("Usage: remove <user/song/snippit>")
         }
     }
 }
