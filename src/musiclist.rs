@@ -22,47 +22,68 @@ impl MusicList {
 
         ml.set_curr_user("test_user1").unwrap();
 
-        let mut song1 = Song::new(  "test_song1".to_string(), 
-                                "test_artist1".to_string(), 
-                                "test_link1".to_string());
-        song1.add_genre("genre1".to_string());
-        song1.add_genre("genre2".to_string());
-        song1.add_genre("genre3".to_string());
+        ml.get_curr_user()
+            .unwrap()
+            .add_song(  "test_song1".to_string(), 
+                        "test_artist1".to_string(), 
+                        "test_link1".to_string(),
+                        Vec::new())
+            .unwrap();
 
-        let song2 = Song::new(  "test_song2".to_string(), 
-                                "test_artist2".to_string(), 
-                                "test_link2".to_string());
 
-        let song3 = Song::new(  "test_song3".to_string(), 
-                                "test_artist3".to_string(), 
-                                "test_link3".to_string());
+        ml.get_curr_user()
+            .unwrap()
+            .add_song(  "test_song2".to_string(), 
+                        "test_artist2".to_string(), 
+                        "test_link2".to_string(),
+                        Vec::new())
+            .unwrap();
 
-        let song4 = Song::new(  "test_song4".to_string(), 
-                                "test_artist4".to_string(), 
-                                "test_link4".to_string());
+        ml.get_curr_user()
+            .unwrap()
+            .add_song(  "test_song3".to_string(), 
+                        "test_artist3".to_string(), 
+                        "test_link3".to_string(),
+                        Vec::new())
+            .unwrap();
+
+        ml.get_curr_user()
+            .unwrap()
+            .add_song(  "test_song4".to_string(), 
+                        "test_artist4".to_string(), 
+                        "test_link4".to_string(),
+                        Vec::new())
+            .unwrap();
         
-        let song5 = Song::new(  "test_song5".to_string(), 
-                                "test_artist5".to_string(), 
-                                "test_link5".to_string());
-
-        ml.get_curr_user().unwrap().add_song(song1).unwrap();
-        ml.get_curr_user().unwrap().add_song(song2).unwrap();
-        ml.get_curr_user().unwrap().add_song(song3).unwrap();
-        ml.get_curr_user().unwrap().add_song(song4).unwrap();
-        ml.get_curr_user().unwrap().add_song(song5).unwrap();
+        ml.get_curr_user()
+            .unwrap()
+            .add_song(  "test_song5".to_string(), 
+                        "test_artist5".to_string(), 
+                        "test_link5".to_string(),
+                        Vec::new())
+            .unwrap();
 
         ml.set_curr_song("test_song1").unwrap();
 
+        ml.get_curr_song().unwrap().add_genre("genre1".to_string());
+        ml.get_curr_song().unwrap().add_genre("genre2".to_string());
+        ml.get_curr_song().unwrap().add_genre("genre3".to_string());
+
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment1".to_string(), vec!["a".to_string()]);
+            .add_snippit(1, 1, "comment1".to_string(), vec!["a".to_string()])
+            .unwrap();
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment2".to_string(), vec!["b".to_string()]);
+            .add_snippit(1, 1, "comment2".to_string(), vec!["b".to_string()])
+            .unwrap();
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment3".to_string(), vec!["c".to_string()]);
+            .add_snippit(1, 1, "comment3".to_string(), vec!["c".to_string()])
+            .unwrap();
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment4".to_string(), vec!["d".to_string()]);
+            .add_snippit(1, 1, "comment4".to_string(), vec!["d".to_string()])
+            .unwrap();
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment5".to_string(), vec!["e".to_string()]);
+            .add_snippit(1, 1, "comment5".to_string(), vec!["e".to_string()])
+            .unwrap();
 
         ml
     }
@@ -96,6 +117,30 @@ impl MusicList {
         Ok(())
     }
 
+    pub fn update_user(&mut self, username: String) -> Result<(), String> {
+        if let None = self.curr_user {
+            return Err("No current user selected!".to_string())
+        }
+        
+        if let Some(_) = self.users.get(&username) {
+            return Err("Username already exists!".to_string());
+        }
+
+        let old_username = self.curr_user.as_ref().unwrap();
+        
+        // reinsert the user under a new key and remove the old key
+        let mut user = self.users.remove(old_username).unwrap();
+        user.set_username(&username);
+        
+        if let Some(_) = self.users.insert(username.clone(), user) {
+            panic!("Tried to insert user into occupied spot")
+        }
+
+        // set the current username to the new one
+        self.curr_user = Some(username);
+        Ok(())
+    }
+
     pub fn get_curr_song(&mut self) -> Result<&mut Song, String> {
         self.get_curr_user()?
             .get_curr_song()
@@ -109,6 +154,27 @@ impl MusicList {
     pub fn remove_curr_song(&mut self) -> Result<(), String> {
         self.get_curr_user()?
             .remove_curr_song()
+    }
+
+    pub fn update_song(
+        &mut self, 
+        title: String, 
+        artist: String, 
+        link: String
+    ) -> Result<(), String>{
+        if title != self.get_curr_song()?.get_title() {
+            self.get_curr_user()?.update_curr_song_title(title)?;
+        }
+
+        if artist != self.get_curr_song()?.get_artist() {
+            self.get_curr_song()?.set_artist(artist);
+        }
+
+        if link != self.get_curr_song()?.get_link() {
+            self.get_curr_song()?.set_link(link);
+        }
+        
+        Ok(())
     }
 
     pub fn get_curr_snippit(&mut self) -> Result<&mut Snippit, String> {
@@ -129,6 +195,19 @@ impl MusicList {
             .remove_curr_snippit()
     }
 
+    pub fn update_snippit(
+        &mut self, 
+        start: u32, 
+        end: u32, 
+        comment: String
+    ) -> Result<(), String> {
+        self.get_curr_snippit()?.set_start(start);
+        self.get_curr_snippit()?.set_end(end);
+        self.get_curr_snippit()?.set_comment(comment);
+
+        Ok(())
+
+    }
 
     pub fn add_user(&mut self, username: String) -> Result<(), String>{
         match self.users.insert(username.clone(), User::new(username)) {
@@ -151,6 +230,10 @@ impl User {
 
     pub fn get_username(&self) -> &str {
         &self.username
+    }
+
+    pub fn set_username(&mut self, username: &str) {
+        self.username = username.to_string()
     }
 
     fn get_curr_song(&mut self) -> Result<&mut Song, String> {
@@ -178,8 +261,43 @@ impl User {
         Ok(())
     }
 
-    pub fn add_song(&mut self, song: Song) -> Result<(), String>{
-        match self.songs.insert(song.title.clone(), song) {
+    pub fn update_curr_song_title(&mut self, title: String) -> Result<(), String> {
+        if let None = self.curr_song {
+            return Err("No current song selected!".to_string())
+        }
+        
+        if let Some(_) = self.songs.get(&title) {
+            return Err("Title already exists!".to_string());
+        }
+
+        let old_title = self.curr_song.as_ref().unwrap();
+        
+        // reinsert the user under a new key and remove the old key
+        let mut song = self.songs.remove(old_title).unwrap();
+        song.set_title(title.clone());
+        if let Some(_) = self.songs.insert(title.clone(), song) {
+            panic!("Tried to insert song into an occupied spot");
+        }
+
+        self.curr_song = Some(title);
+
+        Ok(())
+    }
+
+    pub fn add_song(
+        &mut self, 
+        title: String,
+        artist: String,
+        link: String,
+        genres: Vec<String>
+    ) -> Result<(), String>{
+        let mut song = Song::new(title.clone(), artist, link);
+
+        for genre in genres {
+            song.add_genre(genre);
+        }
+        
+        match self.songs.insert(title, song) {
             None => Ok(()),
             Some(_) => Err(String::from("A song by that title already exists"))
         }
@@ -227,11 +345,17 @@ impl Song {
 
     pub fn get_title(&self) -> &str { &self.title }
 
+    pub fn set_title(&mut self, title: String) { self.title = title }
+
     pub fn get_artist(&self) -> &str { &self.artist }
+
+    pub fn set_artist(&mut self, artist: String) { self.artist = artist }
 
     pub fn get_genres(&self) -> &Vec<String> { &self.genres }
 
     pub fn get_link(&self) -> &str { &self.link }    
+
+    pub fn set_link(&mut self, link: String) { self.link = link }
 
     pub fn get_curr_snippit(&mut self) -> Result<&mut Snippit, String> {
         match self.curr_snippit {
@@ -272,15 +396,21 @@ impl Song {
         end: u32,
         comment: String,
         themes: Vec<String>
-    ) {
+    ) -> Result<(), String>{
         let mut snippit = Snippit::new(self.snip_counter, start, end, comment);
 
         for theme in themes {
             snippit.add_theme(theme);
         }
         
-        self.snippits.insert(self.snip_counter, snippit);
-        self.snip_counter += 1;
+        match self.snippits.insert(self.snip_counter, snippit) {
+            None => {
+                self.snip_counter += 1;
+                Ok(())
+            }
+
+            Some(_) => Err("Snippit ID already exists!!!! (o no)".to_string())
+        }
     }
 }
 
@@ -301,10 +431,16 @@ impl Snippit {
     pub fn get_id(&self) -> usize { self.id }
 
     pub fn get_start(&self) -> u32 { self.start }
+
+    pub fn set_start(&mut self, start: u32) { self.start = start }
     
     pub fn get_end(&self) -> u32 { self.end }
+
+    pub fn set_end(&mut self, end: u32) { self.end = end }
     
     pub fn get_comment(&self) -> &str { &self.comment }
+
+    pub fn set_comment(&mut self, comment: String) { self.comment = comment }
     
     pub fn get_themes(&self) -> &Vec<String> { &self.themes }
 
