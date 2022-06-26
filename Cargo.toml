@@ -1,5 +1,5 @@
 [package]
-name = "ml-nosql"
+name = "musiclist"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 text_io = "0.1.10"
+iced = "0.4"

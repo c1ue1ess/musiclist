@@ -39,6 +39,7 @@ impl Cli<'_> {
                     match cmd {
                         "add" => self.add(&split),
                         "list" => self.list(&split),
+                        "find" => self.find(&split),
                         "select" => self.select(&split),
                         "edit" => self.edit(&split),
                         "remove" => self.remove(&split),
@@ -55,14 +56,13 @@ impl Cli<'_> {
 
     fn help() {
         println!(  "Commands are:
-    add
-    list
-    select
-    edit
-    remove
-    Usage is <command> <user/song/snippit>
-                    
-    Other:
+    add <user/song/snippit>
+    list <users/songs/snippits>
+    select <user/song/snippit>
+    edit <user/song/snippit>
+    remove <user/song/snippit>
+    find <artist/genres/themes>
+    
     help
     quit");
     }
@@ -212,7 +212,10 @@ impl Cli<'_> {
     }   
 
     fn show_snippit(snippit: &Snippit) {
-        print!("ID: {}\tSTART: {}\tEND: {}", snippit.get_id(), snippit.get_start(), snippit.get_end());
+        print!("ID: {}\tSTART: {}\tEND: {}", 
+            snippit.get_id(), 
+            snippit.get_start(), 
+            snippit.get_end());
         
         print!("\tTHEMES:");
         for theme in snippit.get_themes() {
@@ -227,6 +230,68 @@ impl Cli<'_> {
             .get_all_snippits().iter()
             .for_each(|snippit| Cli::show_snippit(snippit));
 
+        Ok(())
+    }   
+
+    //     find <username/title/artist/genres/themes>
+    fn find(&mut self, split: &Vec<&str>) -> Result<(), String> {
+        match split.get(1) {
+            Some(arg) => {
+                match *arg {
+                    "artist" => self.find_by_artist(),
+                    "genres" => self.find_by_genres(),
+                    "themes" => self.find_by_themes(),
+                    _ => Err("Usage: find <artist/genres/themes>".to_string())
+                }
+            }
+
+            None => Err("Usage: find <artist/genres/themes>".to_string())
+        }
+    }  
+
+    fn find_by_artist(&mut self) -> Result<(), String> {
+        println!("Enter the artist you want to search for:");
+        let artist: String = read!("{}\n");
+
+        self.ml.find_songs_by_artist(artist)?.iter()
+            .for_each(|song| Cli::show_song(song));
+        
+        Ok(())
+    }
+
+    fn find_by_genres(&mut self) -> Result<(), String> {
+        let mut genres = Vec::new();
+        let mut add_genre = String::from("y");
+        while add_genre == "y" {
+            println!("Enter the genre you want to search for:");
+            let genre: String = read!();
+            genres.push(genre);
+
+            println!("Do you want to add another genre? [y/n]");
+            add_genre = read!();
+        }
+
+        self.ml.find_songs_by_genres(genres)?.iter()
+            .for_each(|song| Cli::show_song(song));
+        
+        Ok(())
+    }
+
+    fn find_by_themes(&mut self) -> Result<(), String> {
+        let mut themes = Vec::new();
+        let mut add_theme = String::from("y");
+        while add_theme == "y" {
+            println!("Enter the theme you want to search for:");
+            let theme: String = read!();
+            themes.push(theme);
+
+            println!("Do you want to add another theme? [y/n]");
+            add_theme = read!();
+        }
+
+        self.ml.find_songs_by_themes(themes)?.iter()
+            .for_each(|song| Cli::show_song(song));
+        
         Ok(())
     }   
 

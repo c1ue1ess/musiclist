@@ -63,6 +63,12 @@ impl MusicList {
                         Vec::new())
             .unwrap();
 
+        ml.set_curr_song("test_song2").unwrap();
+
+        ml.get_curr_song().unwrap().add_genre("genre1".to_string());
+    
+
+
         ml.set_curr_song("test_song1").unwrap();
 
         ml.get_curr_song().unwrap().add_genre("genre1".to_string());
@@ -70,19 +76,39 @@ impl MusicList {
         ml.get_curr_song().unwrap().add_genre("genre3".to_string());
 
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment1".to_string(), vec!["a".to_string()])
+            .add_snippit(
+                1, 
+                1, 
+                "comment1".to_string(), 
+                vec!["a".to_string()])
             .unwrap();
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment2".to_string(), vec!["b".to_string()])
+            .add_snippit(
+                1, 
+                1, 
+                "comment2".to_string(), 
+                vec!["b".to_string()])
             .unwrap();
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment3".to_string(), vec!["c".to_string()])
+            .add_snippit(
+                1, 
+                1, 
+                "comment3".to_string(), 
+                vec!["c".to_string()])
             .unwrap();
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment4".to_string(), vec!["d".to_string()])
+            .add_snippit(
+                1, 
+                1, 
+                "comment4".to_string(), 
+                vec!["d".to_string()])
             .unwrap();
         ml.get_curr_song().unwrap()
-            .add_snippit(1, 1, "comment5".to_string(), vec!["e".to_string()])
+            .add_snippit(
+                1, 
+                1, 
+                "comment5".to_string(), 
+                vec!["e".to_string()])
             .unwrap();
 
         ml
@@ -215,6 +241,36 @@ impl MusicList {
             Some(_) => Err(String::from("User already exists"))
         }
     }
+
+    pub fn find_songs_by_artist(&mut self, artist: String) -> Result<Vec<&Song>, String> {
+        let found = self.get_curr_user()?.songs.iter()
+            .map(|(_,v)| v)
+            .filter(|song| song.artist == artist)
+            .collect();
+        
+        Ok(found)
+    }
+
+    pub fn find_songs_by_genres(&mut self, genres: Vec<String>) -> Result<Vec<&Song>, String> {
+        let found = self.get_curr_user()?.songs.iter()
+            .map(|kv| kv.1)
+            .filter(|song| song.genres.iter()
+                .any(|genre| genres.contains(genre)))
+            .collect();
+        
+        Ok(found)
+    }
+    
+    pub fn find_songs_by_themes(&mut self, themes: Vec<String>) -> Result<Vec<&Song>, String> {
+        let found = self.get_curr_user()?.songs.iter()
+            .map(|kv| kv.1)
+            .filter(|song| song.snippits.iter()
+                .any(|(_, snippit)| snippit.themes.iter()
+                    .any(|theme| themes.contains(theme))))
+            .collect();
+        
+        Ok(found)
+    }
 }
 
 pub struct User {
@@ -242,6 +298,8 @@ impl User {
             None => return Err(String::from("No current song"))
         }
     }
+
+
     
     fn set_curr_song(&mut self, title: &str) -> Result<(), String> {
         match self.songs.get(title) {
@@ -261,7 +319,10 @@ impl User {
         Ok(())
     }
 
-    pub fn update_curr_song_title(&mut self, title: String) -> Result<(), String> {
+    pub fn update_curr_song_title(
+        &mut self, 
+        title: String
+    ) -> Result<(), String> {
         if let None = self.curr_song {
             return Err("No current song selected!".to_string())
         }
@@ -290,7 +351,7 @@ impl User {
         artist: String,
         link: String,
         genres: Vec<String>
-    ) -> Result<(), String>{
+    ) -> Result<(), String> {
         let mut song = Song::new(title.clone(), artist, link);
 
         for genre in genres {
@@ -303,21 +364,10 @@ impl User {
         }
     }
 
-    fn edit_song(&mut self) {
-
-    }
-
     pub fn get_all_songs(&self) -> Vec<&Song> {
         self.songs.iter().map(|(_, s)| s).collect::<Vec<&Song>>()
     }
 
-    fn find_song_by(&self) {
-
-    }
-
-    fn remove_song(&mut self) {
-
-    }
 }
 
 #[derive(Debug)]
